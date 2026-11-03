@@ -59,7 +59,15 @@ $('sb').innerHTML=[0,1].map(t=>`<div class="tm"><b>${t?'蓝队':'红队'}${V.me>
 $('me').innerHTML=V.me<0?'观战中':`${lab(me)}（你）${my?' ●':''} ${cnt(me)} <span style="color:var(--ac)">${g&&g.say[me]||''}</span>`;
 if(!g){$('mid').innerHTML='<div>等待开局</div>';
 $('msg').innerHTML=[0,1,2,3].map(i=>`${i+1}号位（${i%2?'蓝队':'红队'}）：${V.seats[i]?lab(i):'空位'} ${V.me<0&&!(V.seats[i]&&V.seats[i].on)?`<button data-s="${i}">入座</button>`:''}`).join('<br>')+'<br>1、3号位一队，2、4号位一队，队友坐对面；空位由电脑补。'+(V.me>=0?'<br><button id="st">开始游戏</button> <button id="lv">离座</button>':'')}
-else{$('mid').innerHTML=g.tr.filter(x=>x.cs).map((x,i,a)=>`<div class="pl${i==a.length-1?' lp':''}" style="transform:rotate(${(x.p*7+i*13)%11-5}deg)"><small>${rel(x.p)}</small><div class="r">${x.cs.map(c=>el(c)).join('')}</div></div>`).join('')||'<div>—</div>';
+else{
+  $('mid').innerHTML=g.tr.filter(x=>x.cs).map((x,i,a)=>{
+    const k=ana(x.cs); // 识别这组牌的牌型
+    const label=(k&&k.x)?`<span style="color:var(--ac);font-size:10px;margin-left:4px;">[${k.t}]</span>`:''; // 如果是炸弹或五十K，加个黄色标签
+    return `<div class="pl${i==a.length-1?' lp':''}" style="transform:rotate(${(x.p*7+i*13)%11-5}deg)">
+      <small>${rel(x.p)}${label}</small>
+      <div class="r">${x.cs.map(c=>el(c)).join('')}</div>
+    </div>`;
+  }).join('')||'<div>—</div>';
 let info='';if(sel.size){const k=ana(hand.filter(c=>sel.has(c.id)));info=k?`已选：${k.t}${beats(k,L)?'':'（压不住）'}`:'已选：牌型无效'}
 $('msg').innerHTML=g.over?`${g.res}<br><button id="nx">${g.fo?'重新开始':'下一把'}</button>`:(tip||g.tip||info||(my?'轮到你出牌':''));
 if(V.me<0)$('msg').innerHTML+=[0,1,2,3].filter(i=>!(V.seats[i]&&V.seats[i].on)).map(i=>` <button data-s="${i}">入${i+1}号位</button>`).join('')}
