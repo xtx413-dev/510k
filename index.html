@@ -18,14 +18,14 @@ input{font:inherit;padding:8px;border-radius:8px;border:1px solid var(--fg);back
 .g{display:inline-flex;flex-direction:column}.g u{font-size:10px;text-decoration:none;text-align:center;opacity:.8;cursor:pointer;white-space:nowrap}
 #btns{display:flex;gap:8px;justify-content:center}button{font:inherit;padding:8px 18px;border-radius:8px;border:1px solid var(--fg);background:var(--pn);color:var(--fg);cursor:pointer}button:disabled{opacity:.35}#go,#jn{background:var(--ac);color:#222;border-color:var(--ac);font-weight:700}
 #msg{text-align:center;min-height:2.6em}details{font-size:12px;opacity:.85}
-#info{font-size:12px;line-height:1.7;display:flex;flex-direction:column;gap:6px;padding:0 4px}#info summary{cursor:pointer}
+#info{font-size:12px;line-height:1.7;display:flex;flex-direction:column;gap:6px;padding:0 4px}#info summary{cursor:pointer}.st{border-radius:8px;cursor:pointer}.tmt{position:fixed;left:0;top:0;font-size:28px;pointer-events:none;z-index:9;margin:-14px 0 0 -14px}.spl{position:fixed;font-size:44px;pointer-events:none;z-index:9;margin:-22px 0 0 -22px;animation:pop .9s forwards}@keyframes pop{from{transform:scale(.4);opacity:1}to{transform:scale(1.7);opacity:0}}.hit{animation:shk .5s,tint 1.2s}@keyframes shk{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}@keyframes tint{0%,60%{background:rgba(220,40,40,.55)}100%{background:transparent}}
 .pl{display:inline-block;margin:2px 4px;text-align:center}.pl small{display:block;font-size:10px;opacity:.85}.pl .r{padding-left:12px;justify-content:center}.pl .c{width:30px;height:44px;font-size:11px;margin-left:-12px}.pl .r .c:first-child{margin-left:0}.lp .c{outline:2px solid var(--ac)}
 </style></head><body><div id="app">
 <div id="lobby"><h2>5 10K 联机版</h2><div>四个人输入同一个房间号即可同桌；空位由电脑补。</div><input id="nm" placeholder="昵称" maxlength="8"><input id="rm" placeholder="房间号（如 888）" maxlength="12"><button id="jn">进入房间</button></div>
 <div id="game" hidden>
 <div id="sb"></div>
 <div id="tbl"><div class="st" id="s2" style="grid-area:t"></div><div class="st" id="s3" style="grid-area:l"></div><div id="mid"></div><div class="st" id="s1" style="grid-area:r"></div></div>
-<div id="msg"></div><div class="st" id="me"></div><div id="btns"><button id="ht">提示</button><button id="ps">不要</button><button id="go">出牌</button></div>
+<div class="st" style="opacity:.75;cursor:default">点击对手或队友的座位，可以朝 TA 扔西红柿 🍅（只是玩，不影响牌局）</div><div id="msg"></div><div class="st" id="me"></div><div id="btns"><button id="ht">提示</button><button id="ps">不要</button><button id="go">出牌</button></div>
 <div id="hand"></div>
 <div id="info"><div id="cap"></div><details id="trk" open><summary>五十K未现身统计（已排除已出的牌和你手里的牌）</summary><div id="tk"></div></details><details id="hd"><summary>历史出牌</summary><div id="hl"></div></details></div>
 <details><summary>规则与牌力表</summary>大小：4最小…A、2、3最大，小王、大王更大。单牌/对子只能用同型或炸弹管；一大一小王算对子（仅大于对3）。<br>牌力由小到大：3炸 &lt; 4炸 &lt; 假五十K &lt; 5炸 &lt; 双小王 &lt; 真五十K（♦&lt;♣&lt;♥&lt;♠）&lt; 6炸 &lt; 7炸 &lt; 8炸 &lt; 双大王。<br>5=5分，10、K=10分。点击牌选中，点击分组标签可整组选中。1、3号位为红队，2、4号位为蓝队，队友坐对面。</details>
@@ -39,14 +39,14 @@ const socket=io(),post=o=>socket.emit('act',o);
 $('nm').value=localStorage.n510||'';$('rm').value=localStorage.r510||'';
 $('jn').onclick=()=>{room=$('rm').value.trim()||'main';nick=$('nm').value.trim()||'玩家';localStorage.n510=nick;localStorage.r510=room;
 $('lobby').hidden=true;$('game').hidden=false;const jn=()=>socket.emit('join',{room,tok});if(socket.connected)jn();socket.on('connect',jn)};
-socket.on('state',v=>{V=v;render()});socket.on('disconnect',()=>{$('msg').textContent='连接中断，正在重连…'});
-function layout(h){const g={},G=[],u=new Set();h.forEach(c=>(g[c.r]=g[c.r]||[]).push(c));
-const take=(n,a)=>{G.push({n,cs:a});a.forEach(c=>u.add(c.id))},pk=(r,s)=>h.find(c=>!u.has(c.id)&&c.r==r&&(s==null||c.s==s));
-[14,13].forEach(r=>g[r]&&g[r].length>1&&take(r>13?'双大王':'双小王',g[r].slice(0,2)));
-Object.keys(g).map(Number).filter(r=>r<13&&g[r].length>2).sort((a,b)=>g[b].length-g[a].length||b-a).forEach(r=>take(g[r].length+'炸',g[r]));
-for(let s=0;s<4;s++)for(let a,b,c;(a=pk(1,s))&&(b=pk(6,s))&&(c=pk(9,s));)take('真五十K'+SU[s],[a,b,c]);
-for(let a,b,c;(a=pk(1))&&(b=pk(6))&&(c=pk(9));)take('假五十K',[a,b,c]);
-G.push({n:'',cs:h.filter(c=>!u.has(c.id)).sort((a,b)=>b.r-a.r||a.s-b.s)});return G}
+socket.on('state',v=>{V=v;render()});
+const seatEl=i=>{const k=(i-Math.max(V.me,0)+4)%4;return k?$('s'+k):$('me')};let lt=0;
+[1,2,3].forEach(k=>$('s'+k).onclick=()=>{if(!V||V.me<0||Date.now()-lt<1500)return;lt=Date.now();post({t:'tomato',to:(V.me+k)%4})});
+socket.on('tomato',({from,to})=>{if(!V)return;const a=seatEl(from).getBoundingClientRect(),b=seatEl(to).getBoundingClientRect(),x0=a.left+a.width/2,y0=a.top+a.height/2,x1=b.left+b.width/2,y1=b.top+b.height/2,e=document.createElement('div');
+e.className='tmt';e.textContent='🍅';document.body.appendChild(e);
+e.animate([{transform:`translate(${x0}px,${y0}px) scale(.6) rotate(0)`},{transform:`translate(${(x0+x1)/2}px,${Math.min(y0,y1)-70}px) scale(1.2) rotate(360deg)`,offset:.5},{transform:`translate(${x1}px,${y1}px) scale(1) rotate(720deg)`}],{duration:700,easing:'ease-in'}).onfinish=()=>{
+e.remove();const s=document.createElement('div');s.className='spl';s.textContent='💥';s.style.left=x1+'px';s.style.top=y1+'px';document.body.appendChild(s);setTimeout(()=>s.remove(),900);
+const t=seatEl(to);t.classList.remove('hit');void t.offsetWidth;t.classList.add('hit')}});socket.on('disconnect',()=>{$('msg').textContent='连接中断，正在重连…'});
 const el=(c,x='')=>`<i class="c ${c.s==1||c.s==3||c.r==14?'rd':''} ${x}" data-id="${c.id}">${c.r>12?N[c.r][0]+'<br>王':N[c.r]+'<b>'+SU[c.s]+'</b>'}</i>`;
 const tx=c=>`<span class="${c.s==1||c.s==3||c.r==14?'rd':''}">${c.r>12?N[c.r]:SU[c.s]+N[c.r]}</span>`,sr=a=>[...a].sort((x,y)=>x.r-y.r||x.s-y.s).map(tx).join(' ')||'—';
 const TP=['<ellipse cx="30" cy="22" rx="17" ry="11"/>','<circle cx="52" cy="20" r="5"/>','<ellipse cx="20" cy="8" rx="3" ry="5"/>','<ellipse cx="40" cy="8" rx="3" ry="5"/>','<ellipse cx="20" cy="36" rx="3" ry="5"/>','<ellipse cx="40" cy="36" rx="3" ry="5"/>','<path d="M13 22L5 24"/>'];
@@ -55,19 +55,11 @@ function render(){const g=V.g,me=Math.max(V.me,0),A=k=>(me+k)%4,rel=p=>NM[(p-me+
 const lab=i=>V.seats[i]?V.seats[i].n+(V.seats[i].on?'':'（离线）'):'电脑',cnt=i=>g?(g.cnt[i]?g.cnt[i]+'张':'已走 第'+(g.fin.indexOf(i)+1)):'';
 const my=!!g&&!g.over&&!g.busy&&g.turn==V.me,L=g&&g.lc.length?ana(g.lc):null,hand=g?g.hand:[];
 $('sb').innerHTML=[0,1].map(t=>`<div class="tm"><b>${t?'蓝队':'红队'}${V.me>=0&&t==V.me%2?'（我方）':''}</b> 累计 ${V.C[t]} 分 <small>（本把 ${g?g.tp[t]:0}）</small><br><small>${lab(t)}、${lab(t+2)}</small>${turtle(V.T[t])}</div>`).join('');
-[1,2,3].forEach(k=>{const i=A(k);$('s'+k).innerHTML=`${lab(i)}${g&&g.turn==i&&!g.over?' ●':''}<br>${cnt(i)}<em>${g&&g.say[i]||''}</em>`});
-$('me').innerHTML=V.me<0?'观战中':`${lab(me)}（你）${my?' ●':''} ${cnt(me)} <span style="color:var(--ac)">${g&&g.say[me]||''}</span>`;
+[1,2,3].forEach(k=>{const i=A(k);$('s'+k).innerHTML=`${lab(i)}${g&&g.turn==i&&!g.over?' ●':''}<br>${cnt(i)}${V.tc[i]?' 🍅×'+V.tc[i]:''}<em>${g&&g.say[i]||''}</em>`});
+$('me').innerHTML=V.me<0?'观战中':`${lab(me)}（你）${my?' ●':''} ${cnt(me)}${V.tc[me]?' 🍅×'+V.tc[me]:''} <span style="color:var(--ac)">${g&&g.say[me]||''}</span>`;
 if(!g){$('mid').innerHTML='<div>等待开局</div>';
 $('msg').innerHTML=[0,1,2,3].map(i=>`${i+1}号位（${i%2?'蓝队':'红队'}）：${V.seats[i]?lab(i):'空位'} ${V.me<0&&!(V.seats[i]&&V.seats[i].on)?`<button data-s="${i}">入座</button>`:''}`).join('<br>')+'<br>1、3号位一队，2、4号位一队，队友坐对面；空位由电脑补。'+(V.me>=0?'<br><button id="st">开始游戏</button> <button id="lv">离座</button>':'')}
-else{
-  $('mid').innerHTML=g.tr.filter(x=>x.cs).map((x,i,a)=>{
-    const k=ana(x.cs); // 识别这组牌的牌型
-    const label=(k&&k.x)?`<span style="color:var(--ac);font-size:10px;margin-left:4px;">[${k.t}]</span>`:''; // 如果是炸弹或五十K，加个黄色标签
-    return `<div class="pl${i==a.length-1?' lp':''}" style="transform:rotate(${(x.p*7+i*13)%11-5}deg)">
-      <small>${rel(x.p)}${label}</small>
-      <div class="r">${x.cs.map(c=>el(c)).join('')}</div>
-    </div>`;
-  }).join('')||'<div>—</div>';
+else{$('mid').innerHTML=`<div style="margin-bottom:4px"><b style="color:var(--ac);font-size:16px">本回合桌面 ${g.pts} 分</b></div>`+g.tr.filter(x=>x.cs).map((x,i,a)=>`<div class="pl${i==a.length-1?' lp':''}" style="transform:rotate(${(x.p*7+i*13)%11-5}deg)"><small>${rel(x.p)}</small><div class="r">${x.cs.map(c=>el(c)).join('')}</div></div>`).join('')||'<div>—</div>';
 let info='';if(sel.size){const k=ana(hand.filter(c=>sel.has(c.id)));info=k?`已选：${k.t}${beats(k,L)?'':'（压不住）'}`:'已选：牌型无效'}
 $('msg').innerHTML=g.over?`${g.res}<br><button id="nx">${g.fo?'重新开始':'下一把'}</button>`:(tip||g.tip||info||(my?'轮到你出牌':''));
 if(V.me<0)$('msg').innerHTML+=[0,1,2,3].filter(i=>!(V.seats[i]&&V.seats[i].on)).map(i=>` <button data-s="${i}">入${i+1}号位</button>`).join('')}
@@ -84,7 +76,7 @@ else{const c=t.closest('.c');if(!c)return;const i=+c.dataset.id;sel.has(i)?sel.d
 $('go').onclick=()=>{const g=V.g,cs=g.hand.filter(c=>sel.has(c.id)),k=ana(cs);if(!k||!beats(k,g.lc.length?ana(g.lc):null)){tip='牌型无效或压不住';return render()}post({t:'play',ids:cs.map(c=>c.id)});sel=new Set();tip='';hi=0};
 $('ps').onclick=()=>{post({t:'pass'});sel=new Set();hi=0;tip=''};
 $('ht').onclick=()=>{const g=V.g,L=g.lc.length?ana(g.lc):null,gr={};g.hand.forEach(c=>(gr[c.r]=gr[c.r]||[]).push(c));
-const ok=cands(g.hand).filter(o=>beats(o.k,L)).sort((a,b)=>key(a.k)-key(b.k)),sf=ok.filter(o=>!o.k.x&&gr[o.cs[0].r].length<3),l=sf.length?sf:ok;
+const pr=new Set(layout(g.hand).filter(x=>/五十K|王/.test(x.n)).flatMap(x=>x.cs.map(c=>c.id))),ok=cands(g.hand).filter(o=>beats(o.k,L)).sort((a,b)=>key(a.k)-key(b.k)),sf=ok.filter(o=>!o.k.x&&gr[o.cs[0].r].length<3&&!o.cs.some(c=>pr.has(c.id))),l=sf.length?sf:ok;
 if(!l.length)tip='没有能压住的牌，请选择“不要”';else{sel=new Set(l[hi++%l.length].cs.map(c=>c.id));tip=''}render()};
 $('msg').onclick=e=>{const t=e.target;if(t.dataset.s)post({t:'sit',seat:+t.dataset.s,name:nick});else if(t.id=='st')post({t:'start'});else if(t.id=='lv')post({t:'leave'});else if(t.id=='nx')post({t:'next'})};
 </script></body></html>
