@@ -15,5 +15,14 @@ if(g[13]&&g[14])o.push([g[13][0],g[14][0]]);
 [13,14].forEach(r=>g[r]&&g[r].length>1&&o.push(g[r].slice(0,2)));
 for(const a of g[1]||[])for(const b of g[6]||[])for(const c of g[9]||[])o.push([a,b,c]);
 return o.map(cs=>({cs,k:ana(cs)})).filter(x=>x.k)}
-Object.assign(e,{N,SU,pt,key,ana,beats,cands});
+function layout(h){const g={},B=[],J=[],Rr=[],Ff=[],u=new Set();h.forEach(c=>(g[c.r]=g[c.r]||[]).push(c));
+const mark=a=>a.forEach(c=>u.add(c.id)),pk=(r,s)=>h.find(c=>!u.has(c.id)&&c.r==r&&(s==null||c.s==s));
+[14,13].forEach(r=>{if(g[r]&&g[r].length>1){const a=g[r].slice(0,2);J.push({n:r>13?'双大王':'双小王',cs:a});mark(a)}});
+const bombs=m=>{const q={};h.filter(c=>!u.has(c.id)&&c.r<13).forEach(c=>(q[c.r]=q[c.r]||[]).push(c));Object.keys(q).filter(r=>q[r].length>=m).forEach(r=>{B.push({n:q[r].length+'炸',cs:q[r]});mark(q[r])})};
+bombs(5);
+for(let s=0;s<4;s++)for(let a,b,c;(a=pk(1,s))&&(b=pk(6,s))&&(c=pk(9,s));){Rr.push({n:'真五十K'+SU[s],cs:[a,b,c]});mark([a,b,c])}
+for(let a,b,c;(a=pk(1))&&(b=pk(6))&&(c=pk(9));){Ff.push({n:'假五十K',cs:[a,b,c]});mark([a,b,c])}
+bombs(3);B.sort((x,y)=>y.cs.length-x.cs.length||y.cs[0].r-x.cs[0].r);
+return[...J,...Rr,...Ff,...B,{n:'',cs:h.filter(c=>!u.has(c.id)).sort((a,b)=>b.r-a.r||a.s-b.s)}]}
+Object.assign(e,{N,SU,pt,key,ana,beats,cands,layout});
 })(typeof module!='undefined'?module.exports:window);
